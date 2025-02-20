@@ -59,3 +59,23 @@ export const loginUser: RequestHandler = async (req: Request, res: Response): Pr
     res.status(500).json({ message: "Login failed", error });
   }
 };
+
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+       res.status(401).json({ message: "No Refresh Token Provided" });
+       return
+    }
+
+    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      if (err) return res.status(403).json({ message: "Invalid Refresh Token" });
+
+      const newAccessToken = jwt.sign({ id: decoded.id, role: decoded.role }, JWT_SECRET, { expiresIn: "15m" }); // 🔥 Refresh access token
+      res.json({ accessToken: newAccessToken });
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Token refresh failed", error });
+  }
+};
+

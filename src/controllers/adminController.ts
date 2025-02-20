@@ -2,18 +2,25 @@ import { Request, Response } from "express";
 import User from "../models/userModel";
 import Order from "../models/orderModel";
 import Product from "../models/productModel";
+import { AuthRequest } from "../middleware/authMiddleware";
 
 // ✅ Get the logged-in admin's data
-export const getAdminProfile = async (req: Request, res: Response): Promise<void> => {
+export const getAdminProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const {userId} = req.body
-
-    if (!userId) {
-      res.status(400).json({ message: "User ID is required" });
-      return;
+     // ✅ Check if user is attached to request (from `protect` middleware)
+     if (!req.user) {
+     res.status(401).json({ message: "Unauthorized" });
+     return
     }
 
-    const admin = await User.findById(userId).select("-password"); // Exclude password
+    // ✅ Use `req.user.id`, not `userId`
+    const admin = await User.findById(req.user.id).select("-password"); // Exclude password
+
+    if (!admin) {
+     res.status(404).json({ message: "Admin not found" });
+     return
+    }
+
     if (!admin || admin.role !== "admin") {
       res.status(403).json({ message: "Access Denied! Admins only." });
       return;
