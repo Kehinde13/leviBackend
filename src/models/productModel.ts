@@ -9,6 +9,7 @@ interface IProduct extends Document {
     category: string;
     stock: number;
     image: string;
+    vendor: string;
     createdAt: Date;
     updatedAt: Date;
 }

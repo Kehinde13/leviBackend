@@ -63,21 +63,22 @@ export const getAllProducts = async (req: Request, res: Response) => {
 };
 
 // Approve or suspend a vendor
-export const manageVendor = async (req: Request, res: Response): Promise<void> => {
+export const approveVendor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { vendorId } = req.params;
-    const { status } = req.body;
+    const { vendorId, status } = req.body; // Status should be true or false
 
     const vendor = await User.findById(vendorId);
     if (!vendor || vendor.role !== "vendor") {
       res.status(404).json({ message: "Vendor not found" });
-      return 
+      return;
     }
 
-    vendor.status = status; // "approved" or "suspended"
+    vendor.isApproved = status;
     await vendor.save();
-    res.json({ message: `Vendor ${status} successfully` });
+
+    res.json({ message: `Vendor ${status ? "approved" : "rejected"} successfully.` });
   } catch (error) {
-    res.status(500).json({ message: "Error managing vendor", error });
+    res.status(500).json({ message: "Error updating vendor status", error });
   }
 };
+

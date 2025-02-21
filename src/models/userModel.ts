@@ -17,7 +17,7 @@ export interface IUser extends Document {
     email: string;
     password: string;
     role: UserRole;
-    status?: string;
+    isApproved?: string;
     cart: ICartItem[];
     createdAt: Date;
     updatedAt: Date;
@@ -33,7 +33,7 @@ const UserSchema = new Schema<IUser>({
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 8 },
     role: { type: String, enum: Object.values(UserRole), required: true},
-    status: { type: String, enum: ["approved", "suspended"], required: function() { return this.role === UserRole.VENDOR; } }, // Conditional status property
+    isApproved: { type: Boolean, default: false },
     cart: [CartItemSchema],
 }, {
     timestamps: true,

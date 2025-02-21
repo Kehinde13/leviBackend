@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel";
 import type { IUser } from "../models/userModel";
+import { blacklistedTokens } from "../controllers/authController";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -17,6 +18,12 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
   if (!token) {
     res.status(401).json({ message: "Unauthorized - No Token" });
     return
+  }
+
+   // ✅ Check if token is blacklisted
+   if (blacklistedTokens.has(token)) {
+    res.status(401).json({ message: "Session expired. Please log in again." });
+    return;
   }
 
   try {
@@ -38,3 +45,5 @@ export const authorizeRoles = (...roles: string[]) => {
     next();
   };
 };
+
+

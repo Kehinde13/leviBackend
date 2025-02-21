@@ -52,9 +52,15 @@ export const loginUser: RequestHandler = async (req: Request, res: Response): Pr
       return
     }  
 
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: maxAge });
+    // ✅ If vendor is not approved, prevent login
+    if (user.role === "vendor" && !user.isApproved) {
+      res.status(403).json({ message: "Your account is pending approval by the admin." });
+      return;
+    }
 
-    res.json({ token, user: { id: user._id, name: user.name, role: user.role } });
+    const token = jwt.sign({ id: user._id, role: user.role}, JWT_SECRET, { expiresIn: maxAge });
+
+    res.json({ token, user: { id: user._id, name: user.name, role: user.role, isApproved: user.isApproved } });
   } catch (error) {
     res.status(500).json({ message: "Login failed", error });
   }
@@ -76,6 +82,28 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     });
   } catch (error) {
     res.status(500).json({ message: "Token refresh failed", error });
+  }
+};
+
+// ✅ Temporary storage for invalid tokens (use Redis in production)
+export const blacklistedTokens = new Set<string>();
+
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      res.status(401).json({ message: "No token provided" });
+      return;
+    }
+
+    // ✅ Blacklist the token to prevent reuse
+    blacklistedTokens.add(token);
+
+    res.clearCookie("refreshToken", { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Logout failed", error });
   }
 };
 
