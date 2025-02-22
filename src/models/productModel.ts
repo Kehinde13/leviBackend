@@ -9,7 +9,7 @@ interface IProduct extends Document {
     category: string;
     stock: number;
     image: string;
-    vendor: string;
+    vendor: mongoose.Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -20,6 +20,7 @@ const ProductSchema = new Schema<IProduct>({
     price: { type: Number, required: true },
     category: { type: String, required: true },
     stock: { type: Number, required: true, default: 0 },
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     image: { type: String, required: false } // Optional image field
 }, {
     timestamps: true,

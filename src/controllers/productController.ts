@@ -64,27 +64,50 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
     }
 };
 
-// ✅ Update a product (Only the vendor who created it can update)
+// ✅ Update a product 
 export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const product = await Product.findById(req.params.id);
+
+        // ✅ Check if the product exists before accessing `vendor`
         if (!product) {
-          res.status(404).json({ message: 'Product not found' });
-          return
+          res.status(404).json({ message: "Product not found" });
+          return;
         }
 
-        // ✅ Ensure the product belongs to the logged-in vendor
-        if (!req.user || (req.user.role !== 'admin' && product.vendor.toString() !== req.user.id)) {
-            res.status(403).json({ message: 'Access denied! You can only update your own products.' });
-            return
+        // ✅ Ensure `vendor` exists before calling `.toString()`
+        if (!product.vendor) {
+            res.status(400).json({ message: "Product is missing a vendor field." });
+            return;
         }
 
-        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.status(200).json(updatedProduct);
+        // ✅ Ensure the logged-in vendor/admin is allowed to update
+        if (!req.user || (req.user.role !== "admin" && product.vendor.toString() !== req.user.id)) {
+            res.status(403).json({ message: "Access denied! You can only update your own products." });
+            return; 
+        }
+
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            {
+                new: true,
+                runValidators: true, // ✅ Ensure validation is enforced
+            }
+        );
+
+        if (!updatedProduct) {
+            res.status(500).json({ message: "Product update failed. Please try again." });
+            return;
+        }
+
+        res.status(200).json({ message: "Product updated successfully!", product: updatedProduct });
     } catch (error) {
-        res.status(500).json({ message: 'Error updating product', error });
+        res.status(500).json({ message: "Error updating product", error });
     }
 };
+
+
 
 // ✅ Delete a product (Only the vendor who created it or admin can delete)
 export const deleteProduct = async (req: AuthRequest, res: Response): Promise<void> => {
