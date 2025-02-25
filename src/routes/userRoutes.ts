@@ -1,11 +1,12 @@
 // src/routes/userRoutes.ts
 import express from 'express';
-import { getUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/userController';
+import { getCustomers, getUserById, createUser, updateUser, deleteUser, getVendors } from '../controllers/userController';
 
 const router = express.Router();
 
 // Define user routes
-router.get('/', getUsers);
+router.get('/customers', getCustomers);
+router.get('/vendors', getVendors); 
 router.get('/:id', getUserById);
 router.post('/', createUser);
 router.put('/:id', updateUser);

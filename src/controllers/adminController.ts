@@ -65,12 +65,15 @@ export const getAllProducts = async (req: Request, res: Response) => {
 // Approve or suspend a vendor
 export const approveVendor = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { vendorId, status } = req.body; // Status should be true or false
+    const { status } = req.body; // Extract status from the request body
+    const { vendorId } = req.params; // Extract vendorId from URL params
 
-    const vendor = await User.findById(vendorId);
-    if (!vendor || vendor.role !== "vendor") {
-      res.status(404).json({ message: "Vendor not found" });
-      return;
+    // Ensure vendor role filtering
+    const vendor = await User.findOne({ _id: vendorId, role: "vendor" });
+
+    if (!vendor) {
+        res.status(404).json({ message: "Vendor not found" });
+        return;
     }
 
     vendor.isApproved = status;

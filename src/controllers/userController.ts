@@ -2,15 +2,26 @@
 import { Request, Response } from 'express';
 import User from '../models/userModel';
 
-// Get all users
-export const getUsers = async (req: Request, res: Response) => {
+// Get all vendors
+export const getVendors = async (req: Request, res: Response): Promise<void> => {
     try {
-        const users = await User.find();
-        res.status(200).json(users);
+        const vendors = await User.find({ role: 'vendor' });
+        res.status(200).json(vendors);
     } catch (error) {
-        res.status(500).json({ message: 'Error retrieving users', error });
+        res.status(500).json({ message: 'Error retrieving vendors', error });
     }
 };
+
+// Get all customers
+export const getCustomers = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const customers = await User.find({ role: 'customer' });
+        res.status(200).json(customers);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving customers', error });
+    }
+};
+
 
 // Get a single user by ID
 export const getUserById = async (req: Request, res: Response):Promise<void> => {
