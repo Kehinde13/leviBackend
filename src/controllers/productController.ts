@@ -130,3 +130,30 @@ export const deleteProduct = async (req: AuthRequest, res: Response): Promise<vo
         res.status(500).json({ message: 'Error deleting product', error });
     }
 };
+
+// ✅ Get products of the logged-in vendor
+export const getVendorProducts = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user || req.user.role !== 'vendor') {
+            res.status(403).json({ message: 'Access denied! Only vendors can view their products.' });
+            return;
+        }
+
+        const { page = 1, limit = 10 } = req.query;
+        const vendorProducts = await Product.find({ vendor: req.user.id })
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit));
+
+        const totalProducts = await Product.countDocuments({ vendor: req.user.id });
+
+        res.status(200).json({
+            totalProducts,
+            totalPages: Math.ceil(totalProducts / Number(limit)),
+            currentPage: Number(page),
+            products: vendorProducts,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving vendor products', error });
+    }
+};
+
