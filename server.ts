@@ -9,14 +9,20 @@ import orderRoutes from './src/routes/orderRoutes';
 import authRoutes from './src/routes/authRoutes';
 import { protect, authorizeRoles } from './src/middleware/authMiddleware';
 import adminRoutes from './src/routes/adminRoutes';
+import path from "path";
 
 
 
 dotenv.config();
+const allowedOrigins = ["http://localhost:5173"]; // Replace with your frontend URL in production
 
 const app: Application = express();
 app.use(express.json());
-app.use(cors())
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true, // Allow cookies and authorization headers
+  }))
 
 const PORT = process.env.PORT || 3000; // Use environment-specified PORT or default to 3000.
 const CONNECTION = process.env.CONNECTION as string; // Connection string for MongoDB.
@@ -33,6 +39,8 @@ app.use("/api/auth", authRoutes);
 
 // ✅ Admin Routes (Protected)
 app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads"))); // ✅ Serve uploaded files
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is running successfully! 🚀');

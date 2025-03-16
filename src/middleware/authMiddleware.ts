@@ -35,15 +35,28 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
   }
 };
 
-// ✅ Restrict Access to Specific Roles
+// ✅ Authorize Roles
+
 export const authorizeRoles = (...roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
-       res.status(403).json({ message: "Access Denied" });
-       return;
+    // ✅ Ensure `req.user` exists
+    if (!req.user) {
+      console.error("❌ User not authenticated in authorizeRoles middleware.");
+      res.status(401).json({ message: "Unauthorized! Please log in." });
+      return;
     }
+
+    // ✅ Ensure user has the correct role
+    if (!roles.includes(req.user.role)) {
+      console.error(`❌ Access Denied! User role '${req.user.role}' is not authorized.`);
+      res.status(403).json({ message: "Access Denied! Insufficient permissions." });
+      return;
+    }
+
+    // ✅ User has correct role, proceed to next middleware
     next();
   };
 };
+
 
 

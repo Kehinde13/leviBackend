@@ -32,7 +32,7 @@ const UserSchema = new Schema<IUser>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 8 },
-    role: { type: String, enum: Object.values(UserRole), required: true},
+    role: { type: String, enum: Object.values(UserRole), required: true, default: UserRole.CUSTOMER},
     isApproved: { type: Boolean, default: false },
     cart: [CartItemSchema],
 }, {

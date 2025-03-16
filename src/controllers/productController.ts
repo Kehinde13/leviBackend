@@ -1,6 +1,18 @@
 import { Request, Response } from 'express';
 import Product from '../models/productModel';
 import { AuthRequest } from '../middleware/authMiddleware';
+import multer from "multer";
+
+// ✅ Configure Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Store files in "uploads" folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname); // Unique filename
+  },
+});
+export const upload = multer({ storage });
 
 // ✅ Get all products (with pagination)
 export const getProducts = async (req: Request, res: Response) => {
@@ -45,7 +57,8 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
             return;
         }
 
-        const { name, description, price, stock, category, image } = req.body;
+        const { name, description, price, stock, category } = req.body;
+        const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
         const newProduct = new Product({
             name,
@@ -53,7 +66,7 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
             price,
             stock,
             category,
-            image,
+            image: imagePath,
             vendor: req.user.id, // ✅ Assign product to vendor
         });
 
@@ -67,12 +80,18 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
 // ✅ Update a product 
 export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        // ✅ Ensure the logged-in vendor is allowed to update
+        if (!req.user || req.user.role !== 'vendor' || !req.user.isApproved) {
+            res.status(403).json({ message: 'Access denied! Only approved vendors can update products.' });
+            return;
+        }
+        
         const product = await Product.findById(req.params.id);
 
         // ✅ Check if the product exists before accessing `vendor`
         if (!product) {
-          res.status(404).json({ message: "Product not found" });
-          return;
+            res.status(404).json({ message: "Product not found" });
+            return;
         }
 
         // ✅ Ensure `vendor` exists before calling `.toString()`
@@ -81,19 +100,23 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
             return;
         }
 
-        // ✅ Ensure the logged-in vendor/admin is allowed to update
-        if (!req.user || (req.user.role !== "admin" && product.vendor.toString() !== req.user.id)) {
-            res.status(403).json({ message: "Access denied! You can only update your own products." });
-            return; 
-        }
+
+        // ✅ Handle image upload (if provided)
+        const imageUrl = req.file ? `/uploads/${req.file.filename}` : product.image; // ✅ Update image only if a new one is provided
+
+        const { name, description, price, stock, category } = req.body;
 
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            {
-                new: true,
-                runValidators: true, // ✅ Ensure validation is enforced
-            }
+            { 
+                name, 
+                description, 
+                price, 
+                stock, 
+                category, 
+                image: imageUrl 
+            }, // ✅ Update only provided fields
+            { new: true, runValidators: true }
         );
 
         if (!updatedProduct) {
@@ -102,10 +125,12 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
         }
 
         res.status(200).json({ message: "Product updated successfully!", product: updatedProduct });
+
     } catch (error) {
         res.status(500).json({ message: "Error updating product", error });
     }
 };
+
 
 
 
