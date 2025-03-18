@@ -9,7 +9,10 @@ const storage = multer.diskStorage({
     cb(null, "uploads/"); // Store files in "uploads" folder
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname); // Unique filename
+    const safeFilename = file.originalname
+    .replace(/\s+/g, "-") // ✅ Replace spaces with "-"
+    .replace(/[^a-zA-Z0-9.-]/g, ""); // ✅ Remove special characters
+    cb(null, Date.now() + "-" + safeFilename); // Unique filename
   },
 });
 export const upload = multer({ storage });
@@ -85,7 +88,7 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
             res.status(403).json({ message: 'Access denied! Only approved vendors can update products.' });
             return;
         }
-        
+
         const product = await Product.findById(req.params.id);
 
         // ✅ Check if the product exists before accessing `vendor`

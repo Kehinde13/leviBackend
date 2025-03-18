@@ -40,7 +40,7 @@ app.use("/api/auth", authRoutes);
 // ✅ Admin Routes (Protected)
 app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
 
-app.use("/uploads", express.static(path.join(__dirname, "../uploads"))); // ✅ Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // ✅ Serve uploaded files
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is running successfully! 🚀');
