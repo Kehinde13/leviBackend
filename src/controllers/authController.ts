@@ -2,8 +2,8 @@ import { Request, Response, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User, { UserRole } from "../models/userModel";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+ 
+const JWT_SECRET = process.env.JWT_SECRET as string;
 //max token age
 const maxAge = 3 * 24 * 60 * 60;
 
@@ -68,7 +68,7 @@ export const loginUser: RequestHandler = async (req: Request, res: Response): Pr
 
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { token } = req.body;
+    const { token } = req.body; 
     if (!token) {
        res.status(401).json({ message: "No Refresh Token Provided" });
        return

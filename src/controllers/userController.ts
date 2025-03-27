@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import User from "../models/userModel";
-import Order from "../models/orderModel";
 import { AuthRequest } from "../middleware/authMiddleware";
 
 // ✅ Get all vendors

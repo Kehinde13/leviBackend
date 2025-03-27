@@ -14,7 +14,7 @@ import path from "path";
 
 
 dotenv.config();
-const allowedOrigins = ["http://localhost:5173"]; // Replace with your frontend URL in production
+const allowedOrigins = ["http://localhost:5173"]; // Replace with frontend URL in production
 
 const app: Application = express();
 app.use(express.json());

@@ -12,7 +12,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
     if (!user && (!guest || !guest.name || !guest.email || !guest.address)) {
       res.status(400).json({ message: "Guest must provide name, email, and address." });
       return;
-    }
+    } 
 
     const newTrackingNumber = trackingNumber || uuidv4();
 
