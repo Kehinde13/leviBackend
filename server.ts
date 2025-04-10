@@ -1,66 +1,82 @@
-// server.ts
-import express, { Application, Request, Response } from 'express';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import userRoutes from './src/routes/userRoutes';
-import productRoutes from './src/routes/productsRoutes';
-import orderRoutes from './src/routes/orderRoutes';
-import authRoutes from './src/routes/authRoutes';
-import { protect, authorizeRoles } from './src/middleware/authMiddleware';
-import adminRoutes from './src/routes/adminRoutes';
+import express, { Application, Request, Response } from "express";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import cors from "cors";
+import userRoutes from "./src/routes/userRoutes";
+import productRoutes from "./src/routes/productsRoutes";
+import orderRoutes from "./src/routes/orderRoutes";
+import authRoutes from "./src/routes/authRoutes";
+import { protect, authorizeRoles } from "./src/middleware/authMiddleware";
+import adminRoutes from "./src/routes/adminRoutes";
 import path from "path";
 
-
-
 dotenv.config();
-const allowedOrigins = ["http://localhost:5173"]; // Replace with frontend URL in production
+
+const allowedOrigins = ["http://localhost:5173"]; // ✅ Update this with your frontend URL in production
 
 const app: Application = express();
 app.use(express.json());
+
+// ✅ Fix: Explicitly set CORS headers to allow requests from the frontend
 app.use(
   cors({
-    origin: allowedOrigins,
-    credentials: true, // Allow cookies and authorization headers
-  }))
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // ✅ Allow cookies and authorization headers
+    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Specify allowed headers
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ Specify allowed methods
+  })
+);
 
-const PORT = process.env.PORT || 3000; // Use environment-specified PORT or default to 3000.
-const CONNECTION = process.env.CONNECTION as string; // Connection string for MongoDB.
+// ✅ Fix: Handle preflight requests manually
+app.use((req: Request, res: Response, next): void => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173"); // ✅ Ensure frontend origin is explicitly allowed
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true"); // ✅ Ensure credentials are allowed
 
+  if (req.method === "OPTIONS") {
+    res.status(200).end(); // ✅ Ensure void return type
+    return;
+  }
 
-
-// Routes
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-
-// ✅ Authentication Routes
-app.use("/api/auth", authRoutes);
-
-// ✅ Admin Routes (Protected)
-app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // ✅ Serve uploaded files
-
-app.get('/', (req: Request, res: Response) => {
-    res.send('Server is running successfully! 🚀');
+  next();
 });
 
-// Function to start the server and connect to the database.
-const start = async () => {
-    try {
-      await mongoose.connect(CONNECTION); // Connect to the MongoDB database.
-      app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`); // Log that the server is running.
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error.message); // Log connection errors.
-      } else {
-        console.log("Unexpected error", error); // Log unexpected errors.
-      }
-    }
-  };
-  
-  // Start the server.
-  start();
+const CONNECTION = process.env.CONNECTION as string; // ✅ MongoDB Connection String
+
+// ✅ Connect to MongoDB only once (outside of handler)
+mongoose
+  .connect(CONNECTION)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// ✅ API Routes
+app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
+
+// ✅ Fix: Ensure API responses have CORS headers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
+// ✅ Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ✅ Health Check Route
+app.get("/", (req: Request, res: Response) => {
+  res.send("Server is running successfully! 🚀");
+});
+
+// ✅ Export the Express app for Vercel
+export default app;
