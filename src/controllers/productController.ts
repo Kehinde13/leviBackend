@@ -92,7 +92,7 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
         // ✅ Handle image upload (if provided)
         const imageUrl = req.file ? `/uploads/${req.file.filename}` : product.image; // ✅ Update image only if a new one is provided
 
-        const { name, description, price, stock, category } = req.body;
+        const { name, description, price, stock, category, image } = req.body;
 
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
@@ -102,7 +102,7 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
                 price, 
                 stock, 
                 category, 
-                image: imageUrl 
+                image
             }, // ✅ Update only provided fields
             { new: true, runValidators: true }
         );
