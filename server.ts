@@ -66,6 +66,7 @@ app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
 // ✅ Fix: Ensure API responses have CORS headers
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.setHeader("Access-Control-Allow-Origin", "https://levi-0-0-1.vercel.app");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   next();
 });
