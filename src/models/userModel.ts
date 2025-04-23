@@ -19,6 +19,8 @@ export interface IUser extends Document {
     role: UserRole;
     isApproved?: string;
     cart: ICartItem[];
+    resetToken?: string;
+    resetTokenExpires?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -35,6 +37,8 @@ const UserSchema = new Schema<IUser>({
     role: { type: String, enum: Object.values(UserRole), required: true, default: UserRole.CUSTOMER},
     isApproved: { type: Boolean, default: false },
     cart: [CartItemSchema],
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
 }, {
     timestamps: true,
 });

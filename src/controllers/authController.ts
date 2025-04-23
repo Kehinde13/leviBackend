@@ -2,6 +2,8 @@ import { Request, Response, RequestHandler } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User, { UserRole } from "../models/userModel";
+import crypto from 'crypto';
+import { sendResetEmail } from '../utils/mailer';
  
 const JWT_SECRET = process.env.JWT_SECRET as string;
 //max token age
@@ -65,6 +67,51 @@ export const loginUser: RequestHandler = async (req: Request, res: Response): Pr
     res.status(500).json({ message: "Login failed", error });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  user.resetToken = token;
+  user.resetTokenExpires = expires;
+  await user.save();
+
+  const resetLink = `http://localhost:5173/reset-password/${token}`;
+  await sendResetEmail(user.email, resetLink);
+
+  res.json({ message: 'Password reset link sent' });
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  const user = await User.findOne({
+    resetToken: token,
+    resetTokenExpires: { $gt: new Date() }
+  });
+
+  if (!user) {
+    res.status(400).json({ message: 'Invalid or expired token' });
+    return;
+  } 
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  user.password = hashed;
+  user.resetToken = undefined;
+  user.resetTokenExpires = undefined;
+  await user.save();
+
+  res.json({ message: 'Password reset successful' });
+};
+
 
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
