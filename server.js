@@ -15,7 +15,7 @@ const authMiddleware_1 = require("./src/middleware/authMiddleware");
 const adminRoutes_1 = __importDefault(require("./src/routes/adminRoutes"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
-const allowedOrigins = ["http://localhost:5173"]; // ✅ Update this with your frontend URL in production
+const allowedOrigins = ["http://localhost:5173"]; // https://levi-0-0-1.vercel.app
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 // ✅ Fix: Explicitly set CORS headers to allow requests from the frontend
@@ -59,7 +59,6 @@ app.use("/api/admin", authMiddleware_1.protect, (0, authMiddleware_1.authorizeRo
 // ✅ Fix: Ensure API responses have CORS headers
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-    res.setHeader("Access-Control-Allow-Origin", "https://levi-0-0-1.vercel.app");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     next();
 });

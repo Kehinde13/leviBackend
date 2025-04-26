@@ -53,6 +53,8 @@ const UserSchema = new mongoose_1.Schema({
     role: { type: String, enum: Object.values(UserRole), required: true, default: UserRole.CUSTOMER },
     isApproved: { type: Boolean, default: false },
     cart: [CartItemSchema],
+    resetToken: { type: String },
+    resetTokenExpires: { type: Date },
 }, {
     timestamps: true,
 });

@@ -12,7 +12,7 @@ import path from "path";
 
 dotenv.config();
 
-const allowedOrigins = ["https://levi-0-0-1.vercel.app"]; 
+const allowedOrigins = ["http://localhost:5173"]; // https://levi-0-0-1.vercel.app
 
 const app: Application = express();
 app.use(express.json());
@@ -35,7 +35,7 @@ app.use(
 
 // ✅ Fix: Handle preflight requests manually
 app.use((req: Request, res: Response, next): void => {
-  res.header("Access-Control-Allow-Origin", "https://levi-0-0-1.vercel.app"); // ✅ Ensure frontend origin is explicitly allowed
+  res.header("Access-Control-Allow-Origin", "http://localhost:5173"); // ✅ Ensure frontend origin is explicitly allowed
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", "true"); // ✅ Ensure credentials are allowed
@@ -65,7 +65,7 @@ app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
 
 // ✅ Fix: Ensure API responses have CORS headers
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://levi-0-0-1.vercel.app");
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   next();
 });

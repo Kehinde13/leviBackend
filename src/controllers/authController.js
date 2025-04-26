@@ -45,10 +45,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutUser = exports.blacklistedTokens = exports.refreshToken = exports.loginUser = exports.registerUser = void 0;
+exports.logoutUser = exports.blacklistedTokens = exports.refreshToken = exports.resetPassword = exports.forgotPassword = exports.loginUser = exports.registerUser = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = __importStar(require("../models/userModel"));
+const crypto_1 = __importDefault(require("crypto"));
+const mailer_1 = require("../utils/mailer");
 const JWT_SECRET = process.env.JWT_SECRET;
 //max token age
 const maxAge = 3 * 24 * 60 * 60;
@@ -104,6 +106,42 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.loginUser = loginUser;
+const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const user = yield userModel_1.default.findOne({ email });
+    if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+    }
+    const token = crypto_1.default.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    user.resetToken = token;
+    user.resetTokenExpires = expires;
+    yield user.save();
+    const resetLink = `http://localhost:5173/reset-password/${token}`;
+    yield (0, mailer_1.sendResetEmail)(user.email, resetLink);
+    res.json({ message: 'Password reset link sent' });
+});
+exports.forgotPassword = forgotPassword;
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+    const user = yield userModel_1.default.findOne({
+        resetToken: token,
+        resetTokenExpires: { $gt: new Date() }
+    });
+    if (!user) {
+        res.status(400).json({ message: 'Invalid or expired token' });
+        return;
+    }
+    const hashed = yield bcryptjs_1.default.hash(newPassword, 10);
+    user.password = hashed;
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
+    yield user.save();
+    res.json({ message: 'Password reset successful' });
+});
+exports.resetPassword = resetPassword;
 const refreshToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.body;
